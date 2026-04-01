@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Colocaciones · CET 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold:        #B8963E;
+    --gold-light:  #F5EDD6;
+    --gold-mid:    #D4B46A;
+    --blue:        #1A5FA8;
+    --blue-light:  #E0ECFA;
+    --green:       #1A8A5A;
+    --green-light: #D6F0E4;
+    --red:         #C0392B;
+    --red-light:   #FAE0DE;
+    --amber:       #D4853A;
+    --amber-light: #FAEBD6;
+    --text:        #161616;
+    --text-muted:  #6B6860;
+    --text-dim:    #AEACA6;
+    --border:      #E2DDD6;
+    --border-mid:  #CEC9C0;
+    --surface:     #FAFAF8;
+    --surface2:    #F3F1EC;
+    --white:       #FFFFFF;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--white);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .header {
+    padding: 2.5rem 4rem 2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    background: var(--white);
+  }
+
+  .header-brand {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+
+  .header-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 30px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.15;
+  }
+
+  .header-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 5px;
+    letter-spacing: 0.04em;
+  }
+
+  .header-meta { text-align: right; }
+
+  .period {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .period span { color: var(--gold); font-weight: 500; }
+
+  .nav {
+    display: flex;
+    padding: 0 4rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--white);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .nav-btn {
+    background: none;
+    border: none;
+    padding: 1rem 1.5rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .nav-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+  .nav-btn:hover  { color: var(--text); }
+
+  .section { display: none; padding: 3rem 4rem; animation: fadeIn 0.35s ease; }
+  .section.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 2rem;
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+
+  .kpi { background: var(--white); padding: 1.25rem 1.5rem; transition: background 0.15s; }
+  .kpi:hover { background: var(--surface); }
+
+  .kpi-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .kpi-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 34px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .kpi-value.green { color: var(--green); }
+  .kpi-value.blue  { color: var(--blue);  }
+  .kpi-value.amber { color: var(--amber); }
+
+  .kpi-sub { font-size: 11px; color: var(--text-dim); }
+
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+  }
+
+  .card-title { font-size: 13px; font-weight: 500; color: var(--text); }
+  .card-sub   { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  .canvas-wrap          { position: relative; width: 100%; height: 300px; }
+  .canvas-wrap.tall     { height: 340px; }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .progress-label { font-size: 12px; color: var(--text-muted); width: 60px; flex-shrink: 0; }
+
+  .progress-track {
+    flex: 1;
+    height: 7px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill { height: 100%; border-radius: 4px; }
+  .progress-pct  { font-size: 12px; font-weight: 500; width: 48px; text-align: right; flex-shrink: 0; }
+
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+  .data-table thead th {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 0 1rem 0.75rem;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .data-table thead th:first-child { text-align: left; }
+
+  .data-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.12s;
+  }
+
+  .data-table tbody tr:last-child { border-bottom: none; }
+  .data-table tbody tr:hover      { background: var(--surface); }
+
+  .data-table tbody td {
+    padding: 0.85rem 1rem;
+    text-align: right;
+    color: var(--text-muted);
+  }
+
+  .data-table tbody td:first-child { text-align: left; color: var(--text); }
+  .data-table tbody td.hi { color: var(--text); font-weight: 500; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .badge-green { background: var(--green-light); color: var(--green); }
+  .badge-amber { background: var(--amber-light); color: var(--amber); }
+
+  .delta {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 1px 7px;
+    border-radius: 3px;
+  }
+
+  .delta-up   { background: var(--green-light); color: var(--green); }
+  .delta-down { background: var(--red-light);   color: var(--red);   }
+
+  .divider { height: 1px; background: var(--border); margin: 1.25rem 0; }
+
+  .footnote {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 800px) {
+    .header, .nav, .section { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .kpi-grid { grid-template-columns: repeat(2,1fr); }
+    .two-col  { grid-template-columns: 1fr; }
+    .header   { flex-direction: column; gap: 1rem; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div>
+    <div class="header-brand">Colsubsidio · Centro de Empleo y Talento</div>
+    <div class="header-title">Tablero de Colocaciones</div>
+    <div class="header-sub">Análisis Q1 · Enero – Marzo · Bogotá y Cundinamarca</div>
+  </div>
+  <div class="header-meta">
+    <div class="period">Periodo activo <span>Q1 2026</span></div>
+    <div class="period" style="margin-top:4px;">Referencia histórica <span>Q1 2025</span></div>
+  </div>
+</header>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="switchTab('s1',this)">01 · Cumplimiento 2026</button>
+  <button class="nav-btn" onclick="switchTab('s2',this)">02 · Comparativo 2025 vs 2026</button>
+</nav>
+
+<!-- ══════════════════════════
+     SECCIÓN 1 · CUMPLIMIENTO
+══════════════════════════ -->
+<section class="section active" id="s1">
+
+  <div class="section-label">Sección 01</div>
+  <div class="section-title">Cumplimiento de meta · Colocaciones 2026</div>
+
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">Meta Q1</div>
+      <div class="kpi-value">17.881</div>
+      <div class="kpi-sub">Ene + Feb + Mar</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Contratados Q1</div>
+      <div class="kpi-value blue">19.920</div>
+      <div class="kpi-sub">Ejecución real</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Excedente</div>
+      <div class="kpi-value green">+2.039</div>
+      <div class="kpi-sub">Personas sobre la meta</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Cumplimiento Q1</div>
+      <div class="kpi-value green">111,4%</div>
+      <div class="kpi-sub">2 de 3 meses en verde</div>
+    </div>
+  </div>
+
+  <!-- Gráfico área Meta vs Contratados -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Meta vs. contratados por mes</div>
+        <div class="card-sub">Líneas con área rellena · Colocaciones 2026</div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><span class="legend-dot" style="background:#B8963E;"></span>Meta</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#1A5FA8;"></span>Contratados</div>
+      </div>
+    </div>
+    <div class="canvas-wrap tall">
+      <canvas id="chart1"></canvas>
+    </div>
+  </div>
+
+  <div class="two-col">
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Cumplimiento mensual</div>
+          <div class="card-sub">Porcentaje de avance sobre meta</div>
+        </div>
+      </div>
+
+      <div class="progress-row">
+        <span class="progress-label">Enero</span>
+        <div class="progress-track">
+          <div class="progress-fill" style="width:100%; background:#1A5FA8;"></div>
+        </div>
+        <span class="progress-pct" style="color:#1A5FA8;">125,5%</span>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">Febrero</span>
+        <div class="progress-track">
+          <div class="progress-fill" style="width:79%; background:#D4853A;"></div>
+        </div>
+        <span class="progress-pct" style="color:#D4853A;">99,0%</span>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">Marzo</span>
+        <div class="progress-track">
+          <div class="progress-fill" style="width:87%; background:#1A8A5A;"></div>
+        </div>
+        <span class="progress-pct" style="color:#1A8A5A;">109,2%</span>
+      </div>
+
+      <div class="divider"></div>
+      <div class="footnote">
+        Escala: 100% de la barra = cumplimiento de enero (125,5%).<br>
+        Febrero quedó 62 personas bajo la meta — brecha del 1,0%.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Detalle mensual</div>
+          <div class="card-sub">Meta · contratados · diferencia · estado</div>
+        </div>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Mes</th>
+            <th>Meta</th>
+            <th>Contratados</th>
+            <th>Dif.</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Enero</td>
+            <td>6.059</td>
+            <td class="hi" style="color:#1A5FA8;">7.603</td>
+            <td><span class="delta delta-up">+1.544</span></td>
+            <td><span class="badge badge-green">Cumplido</span></td>
+          </tr>
+          <tr>
+            <td>Febrero</td>
+            <td>5.959</td>
+            <td class="hi" style="color:#D4853A;">5.897</td>
+            <td><span class="delta delta-down">−62</span></td>
+            <td><span class="badge badge-amber">Parcial</span></td>
+          </tr>
+          <tr>
+            <td>Marzo</td>
+            <td>5.863</td>
+            <td class="hi" style="color:#1A8A5A;">6.420</td>
+            <td><span class="delta delta-up">+557</span></td>
+            <td><span class="badge badge-green">Cumplido</span></td>
+          </tr>
+          <tr style="border-top:1.5px solid var(--border-mid);">
+            <td style="font-weight:500;">Total Q1</td>
+            <td style="font-weight:500;">17.881</td>
+            <td class="hi" style="color:#1A5FA8;">19.920</td>
+            <td><span class="delta delta-up">+2.039</span></td>
+            <td><span class="badge badge-green">111,4%</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════
+     SECCIÓN 2 · COMPARATIVO
+══════════════════════════ -->
+<section class="section" id="s2">
+
+  <div class="section-label">Sección 02</div>
+  <div class="section-title">Comparativo mensual · 2025 vs. 2026</div>
+
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">Q1 2025</div>
+      <div class="kpi-value">17.844</div>
+      <div class="kpi-sub">Ene + Feb + Mar</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Q1 2026</div>
+      <div class="kpi-value blue">19.920</div>
+      <div class="kpi-sub">Ene + Feb + Mar</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Variación absoluta</div>
+      <div class="kpi-value green">+2.076</div>
+      <div class="kpi-sub">Colocaciones adicionales</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Crecimiento Q1</div>
+      <div class="kpi-value green">+11,6%</div>
+      <div class="kpi-sub">vs. mismo período 2025</div>
+    </div>
+  </div>
+
+
+
+  <!-- Gráfico tendencia — ancho completo, primero -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Tendencia de colocaciones · 2025 vs. 2026</div>
+        <div class="card-sub">Evolución mes a mes con área rellena · comparación interanual</div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><span class="legend-dot" style="background:#B8963E;"></span>2025</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#1A5FA8;"></span>2026</div>
+      </div>
+    </div>
+    <div style="position: relative; width: 100%; height: 380px;">
+      <canvas id="chart3"></canvas>
+    </div>
+  </div>
+
+  <!-- Tabla variación interanual — ancho completo, debajo -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Variación interanual</div>
+        <div class="card-sub">Diferencia absoluta y porcentual por mes</div>
+      </div>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Mes</th>
+          <th>2025</th>
+          <th>2026</th>
+          <th>Dif.</th>
+          <th>Var. %</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Enero</td>
+          <td>5.998</td>
+          <td class="hi">7.603</td>
+          <td><span class="delta delta-up">+1.605</span></td>
+          <td style="color:var(--green);font-weight:500;">+26,8%</td>
+        </tr>
+        <tr>
+          <td>Febrero</td>
+          <td>5.937</td>
+          <td class="hi">5.897</td>
+          <td><span class="delta delta-down">−40</span></td>
+          <td style="color:var(--red);font-weight:500;">−0,7%</td>
+        </tr>
+        <tr>
+          <td>Marzo</td>
+          <td>5.909</td>
+          <td class="hi">6.420</td>
+          <td><span class="delta delta-up">+511</span></td>
+          <td style="color:var(--green);font-weight:500;">+8,6%</td>
+        </tr>
+        <tr style="border-top:1.5px solid var(--border-mid);">
+          <td style="font-weight:500;">Total Q1</td>
+          <td style="font-weight:500;">17.844</td>
+          <td class="hi" style="color:#1A5FA8;">19.920</td>
+          <td><span class="delta delta-up">+2.076</span></td>
+          <td style="color:var(--green);font-weight:500;">+11,6%</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="footnote">Febrero es el único mes con caída interanual (−40 personas, −0,7%).</div>
+  </div>
+</section>
+
+<script>
+  function switchTab(id, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  const LABELS  = ['Enero', 'Febrero', 'Marzo'];
+  const C_GOLD  = '#B8963E';
+  const C_BLUE  = '#1A5FA8';
+  const GRID    = 'rgba(0,0,0,0.05)';
+  const TICK    = '#AEACA6';
+
+  const ttBase = {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2DDD6',
+    borderWidth: 1,
+    titleColor: '#161616',
+    bodyColor: '#6B6860',
+    padding: 10,
+    cornerRadius: 6,
+    callbacks: {
+      label: ctx => '  ' + ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString('es-CO')
+    }
+  };
+
+  const scaleBase = (min) => ({
+    x: {
+      ticks: { color: TICK, font: { size: 11, family: 'DM Sans' }, autoSkip: false },
+      grid: { color: GRID },
+      border: { color: '#E2DDD6' }
+    },
+    y: {
+      min,
+      ticks: {
+        color: TICK,
+        font: { size: 11, family: 'DM Sans' },
+        callback: v => v.toLocaleString('es-CO')
+      },
+      grid: { color: GRID },
+      border: { color: '#E2DDD6' }
+    }
+  });
+
+  /* Chart 1 · Área: Meta vs Contratados */
+  new Chart(document.getElementById('chart1'), {
+    type: 'line',
+    data: {
+      labels: LABELS,
+      datasets: [
+        {
+          label: 'Meta',
+          data: [6059, 5959, 5863],
+          borderColor: C_GOLD,
+          backgroundColor: 'rgba(184,150,62,0.15)',
+          borderWidth: 2.5,
+          pointBackgroundColor: '#FFFFFF',
+          pointBorderColor: C_GOLD,
+          pointBorderWidth: 2,
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          fill: true,
+          tension: 0.4
+        },
+        {
+          label: 'Contratados',
+          data: [7603, 5897, 6420],
+          borderColor: C_BLUE,
+          backgroundColor: 'rgba(26,95,168,0.12)',
+          borderWidth: 2.5,
+          pointBackgroundColor: '#FFFFFF',
+          pointBorderColor: C_BLUE,
+          pointBorderWidth: 2,
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          fill: true,
+          tension: 0.4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: false }, tooltip: ttBase },
+      scales: scaleBase(5400)
+    }
+  });
+
+
+
+  /* Chart 3 · Línea tendencia comparativa — ancho completo */
+  new Chart(document.getElementById('chart3'), {
+    type: 'line',
+    data: {
+      labels: LABELS,
+      datasets: [
+        {
+          label: '2025',
+          data: [5998, 5937, 5909],
+          borderColor: C_GOLD,
+          backgroundColor: 'rgba(184,150,62,0.10)',
+          borderWidth: 3,
+          pointBackgroundColor: '#FFFFFF',
+          pointBorderColor: C_GOLD,
+          pointBorderWidth: 2.5,
+          pointRadius: 8,
+          pointHoverRadius: 11,
+          fill: true,
+          tension: 0.4
+        },
+        {
+          label: '2026',
+          data: [7603, 5897, 6420],
+          borderColor: C_BLUE,
+          backgroundColor: 'rgba(26,95,168,0.10)',
+          borderWidth: 3,
+          pointBackgroundColor: '#FFFFFF',
+          pointBorderColor: C_BLUE,
+          pointBorderWidth: 2.5,
+          pointRadius: 8,
+          pointHoverRadius: 11,
+          fill: true,
+          tension: 0.4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      layout: { padding: { top: 32, left: 16, right: 16, bottom: 8 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: ttBase,
+        datalabels: false
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: TICK,
+            font: { size: 13, family: 'DM Sans' },
+            autoSkip: false,
+            padding: 10
+          },
+          grid: { color: GRID },
+          border: { color: '#E2DDD6' }
+        },
+        y: {
+          min: 5400,
+          max: 8200,
+          ticks: {
+            color: TICK,
+            font: { size: 12, family: 'DM Sans' },
+            callback: v => v.toLocaleString('es-CO'),
+            stepSize: 500,
+            padding: 10
+          },
+          grid: { color: GRID },
+          border: { color: '#E2DDD6' }
+        }
+      },
+      animation: {
+        onComplete: function() {
+          const chart = this;
+          const ctx = chart.ctx;
+          ctx.save();
+          chart.data.datasets.forEach((dataset, i) => {
+            const meta = chart.getDatasetMeta(i);
+            meta.data.forEach((point, j) => {
+              const val = dataset.data[j].toLocaleString('es-CO');
+              const color = i === 0 ? C_GOLD : C_BLUE;
+              ctx.font = '500 12px DM Sans, sans-serif';
+              ctx.fillStyle = color;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'bottom';
+              ctx.fillText(val, point.x, point.y - 14);
+            });
+          });
+          ctx.restore();
+        }
+      }
+    }
+  });
+</script>
+
+</body>
+</html>
